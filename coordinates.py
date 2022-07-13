@@ -1,11 +1,12 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 
 
-class Coordinates(NamedTuple):
+@dataclass(slots=True, frozen=True)
+class Coordinates:
     latitude: float
     longitude: float
 
 
 def get_gps_coordinates() -> Coordinates:
     """Returns current coordinates using IP"""
-    return Coordinates(10, 20)
+    return Coordinates(longitude=10, latitude=20)
