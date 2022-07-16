@@ -8,7 +8,7 @@ from coordinates import Coordinates
 Celsius: TypeAlias = int
 
 
-class WeatherType(Enum):
+class WeatherType(str, Enum):
     THUNDERSTORM = "Гроза"
     DRIZZLE = "Изморось"
     RAIN = "Дождь"
@@ -27,6 +27,12 @@ class Weather:
     city: str
 
 
-def get_weather(coordinates: Coordinates):
+def get_weather(coordinates: Coordinates) -> Weather:
     """Requests weather in OpenWeather API and returns it"""
-    pass
+    return Weather(
+        temperature=20,
+        weather_type=WeatherType.CLEAR,
+        sunrise=datetime.fromisoformat("2022-07-16 04:00:00"),
+        sunset=datetime.fromisoformat("2022-07-16 20:25:00"),
+        city="Minsk"
+    )
