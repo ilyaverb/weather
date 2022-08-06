@@ -5,6 +5,7 @@ import json
 
 from weather_api_service import Weather
 from weather_formatter import format_weather
+from exceptions import CantSaveHistory
 
 
 class WeatherStorage(Protocol):
@@ -21,8 +22,11 @@ class PlainFileWeatherStorage:
     def save(self, weather: Weather) -> None:
         now = datetime.now()
         formatted_weather = format_weather(weather)
-        with open(self._file, "a") as f:
-            f.write(f"{now}\n{formatted_weather}\n")
+        try:
+            with open(self._file, "a") as f:
+                f.write(f"{now}\n{formatted_weather}\n")
+        except PermissionError:
+            raise CantSaveHistory
 
 
 class HistoryRecord(TypedDict):
@@ -53,10 +57,13 @@ class JSONFileWeatherStorage:
             return json.load(f)
 
     def _write(self, history: List[HistoryRecord]) -> None:
-        with open(self._jsonfile, "w") as f:
-            json.dump(history, f, ensure_ascii=False, indent=4)
+        try:
+            with open(self._jsonfile, "w") as f:
+                json.dump(history, f, ensure_ascii=False, indent=4)
+        except PermissionError:
+            raise CantSaveHistory
 
 
 def save_weather(weather: Weather, storage: WeatherStorage) -> None:
-    """Saving weather in the storage"""
+    """Saves weather in the storage"""
     storage.save(weather)
