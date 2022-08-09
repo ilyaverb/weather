@@ -31,7 +31,6 @@ class WeatherType(str, Enum):
     CLOUDS = "Облачно"
 
 
-# @dataclass(slots=True, frozen=True)
 @dataclass
 class Weather:
     __slots__ = ("temperature", "weather_type", "sunrise", "sunset", "city")

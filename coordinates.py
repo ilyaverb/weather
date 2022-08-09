@@ -1,13 +1,11 @@
-import json
 from dataclasses import dataclass
-from subprocess import Popen, PIPE
-from typing import Literal, Union, List, Dict
+import urllib.request
+from urllib.error import URLError
 
 import config
 from exceptions import CantGetCoordinates
 
 
-# @dataclass(frozen=True, slots=True)
 @dataclass
 class Coordinates:
     __slots__ = ('latitude', 'longitude')
@@ -17,43 +15,35 @@ class Coordinates:
 
 def get_gps_coordinates() -> Coordinates:
     """Returns current coordinates using IP"""
-    coordinates = _get_ip_coordinates()
+    coordinates = _get_ipinfo_coordinates()
     return _round_coordinates(coordinates)
 
 
-def _get_ip_coordinates() -> Coordinates:
+def _get_ipinfo_coordinates() -> Coordinates:
     ipinfo_output = _get_ipinfo_output()
     coordinates = _parse_coordinates(ipinfo_output)
     return coordinates
 
 
-def _get_ipinfo_output() -> bytes:
-    process = Popen(["curl", "https://ipinfo.io/"], stdout=PIPE)
-    output, err = process.communicate()
-    exit_code = process.wait()
-    if err is not None or exit_code != 0:
+def _get_ipinfo_output() -> str:
+    try:
+        resource = urllib.request.urlopen("https://ipinfo.io/loc?token=" + config.IPINFO_API)
+        return resource.read().decode(resource.headers.get_content_charset())
+    except URLError:
         raise CantGetCoordinates
-    return output
 
 
-def _parse_coordinates(ipinfo_output: bytes) -> Coordinates:
-    output = json.loads(ipinfo_output)
-    latitude, longitude = _parse_coord(output, "loc")
+def _parse_coordinates(ipinfo_output: str) -> Coordinates:
+    output = ipinfo_output.strip().split(",")
     return Coordinates(
-        latitude=latitude,
-        longitude=longitude
+        latitude=_parse_float_coordinate(output[0]),
+        longitude=_parse_float_coordinate(output[1])
     )
 
 
-def _parse_coord(
-        output: Dict[str, str],
-        coord_type: Literal["loc"]) -> List[float]:
-    return _parse_float_coordinates(output[coord_type].strip().split(','))
-
-
-def _parse_float_coordinates(values: List[str]) -> List[float]:
+def _parse_float_coordinate(value: str) -> float:
     try:
-        return [float(value) for value in values]
+        return float(value)
     except ValueError:
         raise CantGetCoordinates
 
